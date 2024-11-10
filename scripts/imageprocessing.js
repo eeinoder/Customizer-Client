@@ -59,6 +59,12 @@ let productName = "Cooler_Cart";
   cartImg.src = cartImg.remoteURL;
 });*/
 
+// function load image handler
+// NOTE: attemot at lazy loading images 
+function loadImage() {
+
+}
+
 // Draw image to canvas, get image data, save as object parameter
 function saveImageData(imgObj) {
   imgObj.crossOrigin = "anonymous";
