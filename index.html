@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="style/styles.css">
+    <link rel="stylesheet" href="style/coloris.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ProdMod</title>
+  </head>
+  <body>
+    <div class="parent">
+
+      <div class="header child">
+        <div class="title helvetica-font">
+          <h1>ProdMod</h1>
+        </div>
+      </div>
+
+      <div class="content child helvetica-font">
+        <!-- TODO: organize below, esp. for mobile responsive design -->
+
+        <div class="product-select-container">
+          <div class="product-name-container">
+            <img class="header-button-img" id="dropdown-button-img-1" src="style/icons/arrow_drop_down_black.png">
+            <div class="product-name">Cooler Cart</div>
+          </div>
+          <div>by</div>
+          <div class="company-name-container">
+            <img class="header-button-img" id="dropdown-button-img-2" src="style/icons/arrow_drop_down_black.png">
+            <div class="company-name">Unique Vending Carts</div>
+          </div>
+        </div>
+
+        <div class="customizer-container">
+          <div class="product-view-container">
+            <img id="product-image" class="noselect" src="https://i.imgur.com/PVFQMoM.jpeg">
+            <canvas id="product-view-canvas" class="hidden noselect"></canvas>
+            <div id="download-button"><img id="download-button-img" src="style/icons/download_black.png"></div>
+          </div>
+
+          <div class="customizations-select-container">
+            <div class="color-customization-container">
+              <h2>Color</h2>
+              <div class="color-option-subheader">Stock Colors</div>
+              <div class="color-options-container">
+                <div class="color-option default-color selected-color" id="color-button-white"><img class="color-button-select-img" src="style/icons/check_black.png"></div>
+                <div class="color-option default-color" id="color-button-red"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                <div class="color-option default-color" id="color-button-yellow"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                <div class="color-option default-color" id="color-button-green"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                <div class="color-option default-color" id="color-button-blue"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                <div class="color-option default-color" id="color-button-violet"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+              </div>
+              <div class="color-option-subheader">Custom Color</div>
+              <div class="color-options-container">
+                <input class="helvetica-font" id="coloris-color-picker" type="text" data-coloris>
+                <!--div class="color-option" id="color-button-custom"><img id="color-button-custom-img" src="style/icons/plus_black.png"></div-->
+              </div>
+              <!--div class="hex-color-input-container"></div-->
+              <!--div class="pantone-color-input-container"></div-->
+            </div>
+            <div class="logo-customization-container">
+              <!--
+              <h2>Logo</h2>
+              <div class="upload-logo-button-container dot-bg">
+                <img id="upload-logo-button-img" src="style/icons/upload_black.png">
+                <div id="upload-logo-text">Upload logo image</div>
+              </div>
+              -->
+            </div>
+          </div>
+        </div>
+
+        <div class="download-view-container"></div>
+
+        <div class="product-details-container"></div>
+
+      </div>
+
+      <div class="footer child"></div>
+    </div>
+	<script src="scripts/main.js"></script>
+  </body>
+</html>
