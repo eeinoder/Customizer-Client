@@ -106,7 +106,7 @@ h1 {
   flex-direction: center;
   justify-content: center;
   width: min(60%, 600px);
-  height: min(450px, 90vw);
+  height: min(400px, 80vw);
   border: 1px solid var(--border-lightmode);
   /*box-shadow: -5px 5px 0px black;*/
 }
@@ -277,7 +277,7 @@ h1 {
     flex-direction: column;
   }
   .product-view-container {
-    width: 92vw;
+    width: 90vw;
     /*height: 80vw;*/
   }
   .customizations-select-container {

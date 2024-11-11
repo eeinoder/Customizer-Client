@@ -54,6 +54,7 @@ defaultColorButtons.forEach(colorButton => {
 // Coloris color picker (settings, input grab)
 // TODO: must wait for something to load?
 function initColorPicker() {
+  // Set certain modifications
   Coloris({
     //themeMode: 'dark',
     alpha: false,
@@ -62,7 +63,10 @@ function initColorPicker() {
     closeButton: true,
     rtl: true,
   });
+  // Set initial color (white)
   updateColorPicker("ffffff");
+  // Set to readonly (disable keyboard popup on mobile)
+  colorisColorInput.readOnly = true;
 }
 initColorPicker();
 
@@ -80,6 +84,7 @@ function updateColorPicker(hexColor) {
   colorisColorInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+// TODO: DISABLE KEYBOARD POPUP (MOBILE) ON ENTER COLOR PICKER INPUT
 // COLOR PICKER EVENT HANDLING
 // Pick color event
 /*document.addEventListener('coloris:pick', event => {
