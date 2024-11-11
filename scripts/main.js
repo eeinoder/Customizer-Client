@@ -14,12 +14,12 @@ function loadScripts(scripts){
   let el = document.createElement('script');
   document.body.append(el);
   el.onload = (script) => {
-    console.log(script + ' loaded!');
+    //console.log(script + ' loaded!');
       if (scripts.length) {
         loadScripts(scripts);
       }
       else {
-        console.log('run app');
+        //console.log('run app');
       }
   };
   el.src = script;

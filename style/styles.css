@@ -21,6 +21,9 @@
   --violet-default: rgb(220,80,220);
 
   /*background-color: var(--bg-lightmode);*/
+
+  /* TODO: REMOVE BELOW FIX OVERFLOW, MAKE PRODUCT VIEW SMALLER ON MOBILE SIZE */
+  overflow: hidden;
 }
 
 /* ---------------------- HEADER -------------------- */

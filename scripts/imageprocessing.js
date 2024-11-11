@@ -4,38 +4,41 @@
 const canvas = document.querySelector("#product-view-canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-const defaultColorsURLs = {
+const imgURLs = {
+  // Default color images
   "color-button-white": "https://i.imgur.com/PVFQMoM.jpeg",
   "color-button-red": "https://i.imgur.com/jGGP3a3.jpeg",
   "color-button-yellow": "https://i.imgur.com/VKBEiN1.jpeg",
   "color-button-green": "https://i.imgur.com/gi5LqhD.jpeg",
   "color-button-blue": "https://i.imgur.com/oxrAB4g.jpeg",
-  "color-button-violet": "https://i.imgur.com/6571h3j.jpeg"
+  "color-button-violet": "https://i.imgur.com/6571h3j.jpeg",
+  // Images for image processing (e.g. base layer, mask layer)
+  "base-img": "https://i.imgur.com/PVFQMoM.jpeg",
+  "mask-img": "https://i.imgur.com/NZVkbc2.png"
 }
 
 // Default color images (new image objects)
-let defaultColorsImgs = {} // name : image
-for (const [cartImgName, cartImgURL] of Object.entries(defaultColorsURLs)) {
+let imgObjects = {} // name : image
+// Load first default image (white cart)
+// TODO: make this into initImageObjects()
+loadImage("color-button-white");
+// Set current image data (default, onload)
+currentImgDataURL = imgObjects["color-button-white"].dataURL;
+
+/*for (const [cartImgName, cartImgURL] of Object.entries(imgURLs)) {
   let newImgObj = new Image();
   newImgObj.remoteURL = cartImgURL;
   saveImageData(newImgObj);
-  defaultColorsImgs[cartImgName] = newImgObj;
-}
+  imgObjects[cartImgName] = newImgObj;
+}*/
+
+// TODO: INVOKE LOADIMAGE() FOR maskImg AND baseImg on
+// first click of colorpicker
 
 // Cart images for image processing: color fill "mask", and base image, nonwhite default color images
-const colorImg = new Image();
-colorImg.remoteURL = "https://i.imgur.com/NZVkbc2.png";
-saveImageData(colorImg);
+let maskImg;
+let baseImg;
 
-const baseImg = new Image();
-baseImg.remoteURL = "https://i.imgur.com/PVFQMoM.jpeg";
-saveImageData(baseImg);
-//let cartImgs = [colorImg, baseImg];
-
-// Set current image data (default, onload)
-currentImgDataURL = defaultColorsImgs["color-button-white"].dataURL;
-
-//let cartImages = {};
 
 // TODO: get this from image file, HTML doc, etc. Move to UI.js?
 let companyName = "Unique_Vending_Carts";
@@ -60,9 +63,19 @@ let productName = "Cooler_Cart";
 });*/
 
 // function load image handler
-// NOTE: attemot at lazy loading images 
-function loadImage() {
-
+// NOTE: attemot at lazy loading images
+// 1. load first image (white cart) on page load
+// 2. load remaining default color images on first click
+//    (check if in hashmap imgObjects)
+// 3. load maskImg, baseImg (for image processing) on first interaction
+//    with color picker
+function loadImage(imgNodeName) {
+  console.log("LOADING IMG: ", imgNodeName)
+  let newImgObj = new Image();
+  newImgObj.remoteURL = imgURLs[imgNodeName];
+  saveImageData(newImgObj);
+  imgObjects[imgNodeName] = newImgObj;
+  return newImgObj;
 }
 
 // Draw image to canvas, get image data, save as object parameter
@@ -84,12 +97,12 @@ function saveImageData(imgObj) {
 
 
 
-// Color colorImg (color overlay) with color burn pixel math
+// Color maskImg (color overlay) with color burn pixel math
 // TODO: try different color overlay methods (e.g. multiply, darken, etc.)
-function getColoredImageData(colorImg, baseImg, selectedColorHex="FFFFFF", blendMode="colorBurn") {
+function getColoredImageData(maskImg, baseImg, selectedColorHex="FFFFFF", blendMode="colorBurn") {
   // Input image data
-  // NOTE: assunming colorImg and baseImg are same size and centering
-  let colorImgPixelData = colorImg.imageData.data;
+  // NOTE: assunming maskImg and baseImg are same size and centering
+  let maskImgPixelData = maskImg.imageData.data;
   let baseImgPixelData = baseImg.imageData.data;
   // Result data, colored image
   let resultImageData = new ImageData(baseImg.width, baseImg.height);
@@ -109,17 +122,17 @@ function getColoredImageData(colorImg, baseImg, selectedColorHex="FFFFFF", blend
   // Color that matches target color after applying desired blend mode
   let adjustedColorRGB = getColorRGBFromInverseBlendMode(refBasePixel, selectedColorRGB, blendMode);
   // Iterate over individual pixels
-  for (let i = 0; i < colorImgPixelData.length; i += 4) {
-    // Color colorImg, use baseImg where colorImg is transparent
+  for (let i = 0; i < maskImgPixelData.length; i += 4) {
+    // Color maskImg, use baseImg where maskImg is transparent
     resultPixelData[i] = baseImgPixelData[i];
     resultPixelData[i+1] = baseImgPixelData[i+1];
     resultPixelData[i+2] = baseImgPixelData[i+2];
     resultPixelData[i+3] = baseImgPixelData[i+3];
     // Destructure pixel value of color image layer (r,g,b,a)
-    let alpha = colorImgPixelData[i+3];
-    let colorLayerPixel = [colorImgPixelData[i],
-                           colorImgPixelData[i+1],
-                           colorImgPixelData[i+2],
+    let alpha = maskImgPixelData[i+3];
+    let colorLayerPixel = [maskImgPixelData[i],
+                           maskImgPixelData[i+1],
+                           maskImgPixelData[i+2],
                            alpha];
     if (alpha > 0) {
       // Get colored pixel using adjusted color

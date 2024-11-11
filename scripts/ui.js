@@ -43,7 +43,7 @@ defaultColorButtons.forEach(colorButton => {
     selectColorOption(colorButton);
     let color = colorButton.id.split("-")[2];
     //let newImgPath = `style/images/compact_cooler_${color}.png`;
-    let newImgPath = defaultColorsURLs[colorButton.id];
+    let newImgPath = imgURLs[colorButton.id];
     // TODO: programatically get product name...
     productImage.src = newImgPath;
     // TODO: update color picker button color and input (hex) value
@@ -65,6 +65,14 @@ function initColorPicker() {
   updateColorPicker("ffffff");
 }
 initColorPicker();
+
+// On first click, load base and mask images
+colorisColorInput.onclick = (e) => {
+  if (!Object.keys(imgObjects).includes("base-img")) {
+    maskImg = loadImage("mask-img");
+    baseImg = loadImage("base-img");
+  }
+}
 
 // Update preview color and hex color code (i.e. if default color chosen)
 function updateColorPicker(hexColor) {
@@ -92,11 +100,11 @@ function chooseCustomColor(hexColor) {
   // TODO: optimize - only calculate new rendering if NEW custom color
   if (isNotDefaultColor(hexColor) && hexColor !== selectedColor) {
     deselectColorOptions();
-    let coloredImageData = getColoredImageData(colorImg, baseImg, hexColor)
+    let coloredImageData = getColoredImageData(maskImg, baseImg, hexColor)
     selectedColor = hexColor;
     currentImgDataURL = getImageDataURL(coloredImageData);
     productImage.src = currentImgDataURL;
-    console.log("color picked: ", hexColor)
+    //console.log("color picked: ", hexColor)
   }
 }
 
@@ -109,7 +117,7 @@ downloadButton.onclick = (e) => {
 /*colorButtonCustom.onclick = (e) => {
   // TODO: call function (write it) to show overlay of imgur images
   // TODO: need to wait until images loaded before coloring image
-  let coloredImageData = getColoredImageData(colorImg, baseImg, "350000");
+  let coloredImageData = getColoredImageData(maskImg, baseImg, "350000");
   showImageData(coloredImageData);
 }*/
 
@@ -120,7 +128,12 @@ function selectColorOption(selectedColorButton) {
   selectedColorButton.firstElementChild.classList.remove("hidden");
   // Update color selection
   selectedColor = defaultColors[selectedColorButton.id];
-  currentImgDataURL = defaultColorsImgs[selectedColorButton.id].dataURL;
+  // Load image, get dataURL on first selection
+  if (!Object.keys(imgObjects).includes(selectedColorButton.id)) {
+    loadImage(selectedColorButton.id);
+  }
+  // Update current image dataURL
+  currentImgDataURL = imgObjects[selectedColorButton.id].dataURL;
 }
 
 function deselectColorOptions() {
