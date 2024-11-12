@@ -41,32 +41,34 @@
 
           <div class="customizations-select-container">
             <div class="color-customization-container">
-              <h2>Color</h2>
-              <div class="color-option-subheader">Stock Colors</div>
-              <div class="color-options-container">
-                <div class="color-option default-color selected-color" id="color-button-white"><img class="color-button-select-img" src="style/icons/check_black.png"></div>
-                <div class="color-option default-color" id="color-button-red"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
-                <div class="color-option default-color" id="color-button-yellow"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
-                <div class="color-option default-color" id="color-button-green"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
-                <div class="color-option default-color" id="color-button-blue"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
-                <div class="color-option default-color" id="color-button-violet"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+              <h2>Color <img id="color-dropdown-toggle-button" class="tab-toggle-button" src="style/icons/plus_black.png"></h2>
+              <div class="tab-content-container hidden" id="color-content-container">
+                <div class="color-option-subheader">Stock Colors</div>
+                <div class="color-options-container">
+                  <div class="color-option default-color selected-color" id="color-button-white"><img class="color-button-select-img" src="style/icons/check_black.png"></div>
+                  <div class="color-option default-color" id="color-button-red"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                  <div class="color-option default-color" id="color-button-yellow"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                  <div class="color-option default-color" id="color-button-green"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                  <div class="color-option default-color" id="color-button-blue"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                  <div class="color-option default-color" id="color-button-violet"><img class="color-button-select-img hidden" src="style/icons/check_black.png"></div>
+                </div>
+                <div class="color-option-subheader">Custom Color</div>
+                <div class="color-options-container">
+                  <input inputmode="none" class="helvetica-font" id="coloris-color-picker" type="text" data-coloris>
+                  <!--div class="color-option" id="color-button-custom"><img id="color-button-custom-img" src="style/icons/plus_black.png"></div-->
+                </div>
+                <!--div class="hex-color-input-container"></div-->
+                <!--div class="pantone-color-input-container"></div-->
               </div>
-              <div class="color-option-subheader">Custom Color</div>
-              <div class="color-options-container">
-                <input class="helvetica-font" id="coloris-color-picker" type="text" data-coloris>
-                <!--div class="color-option" id="color-button-custom"><img id="color-button-custom-img" src="style/icons/plus_black.png"></div-->
-              </div>
-              <!--div class="hex-color-input-container"></div-->
-              <!--div class="pantone-color-input-container"></div-->
             </div>
             <div class="logo-customization-container">
-              <!--
-              <h2>Logo</h2>
-              <div class="upload-logo-button-container dot-bg">
-                <img id="upload-logo-button-img" src="style/icons/upload_black.png">
-                <div id="upload-logo-text">Upload logo image</div>
+              <h2>Logo <img id="logo-dropdown-toggle-button" class="tab-toggle-button" src="style/icons/plus_black.png"></h2>
+              <div class="tab-content-container hidden" id="logo-content-container">
+                <div class="upload-logo-button-container dot-bg">
+                  <img id="upload-logo-button-img" src="style/icons/upload_black.png">
+                  <div id="upload-logo-text">Upload logo image</div>
+                </div>
               </div>
-              -->
             </div>
           </div>
         </div>

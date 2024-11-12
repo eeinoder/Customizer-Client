@@ -3,6 +3,19 @@
 /*window.onload = () => {
   initColorPicker();
 }*/
+const MOBILEMAXWIDTH = 700;
+let currScreenSize = window.innerWidth<=MOBILEMAXWIDTH ? "mobile" : "desktop"; // "desktop" or "mobile"
+
+window.onresize = () => {
+  if (window.innerWidth <= MOBILEMAXWIDTH && currScreenSize === "desktop") {
+    currScreenSize = "mobile";
+    toggleMobileDropdownView();
+  }
+  else if (window.innerWidth > MOBILEMAXWIDTH && currScreenSize === "mobile") {
+    currScreenSize = "desktop";
+    toggleMobileDropdownView();
+  }
+}
 
 // UI button parameters
 let selectedColor = "ffffff"; // default
@@ -68,6 +81,7 @@ function initColorPicker() {
   // Set to readonly (disable keyboard popup on mobile)
   colorisColorInput.readOnly = true;
 }
+// Run when page first opened
 initColorPicker();
 
 // On first click, load base and mask images
@@ -151,6 +165,60 @@ function deselectColorOptions() {
     }
   });
 }
+
+
+
+/* TAB TOGGLE BUTTONS */
+
+const tabToggleButtons = document.querySelectorAll(".tab-toggle-button");
+const tabContentContainers = document.querySelectorAll(".tab-content-container");
+const openedTabImgSrc = "style/icons/minus_black.png";
+const closedTabImgSrc = "style/icons/plus_black.png";
+
+// Toggle mobile customization drop down
+function toggleMobileDropdownView() {
+  // Toggle dropdown buttons (+/-) and content ui
+  if (currScreenSize === "mobile") {
+    // Hide content, set button src to "plus.png", show buttons
+    for (var i=0; i<tabToggleButtons.length; i++) {
+      tabContentContainers[i].classList.add("hidden");
+      tabToggleButtons[i].src = closedTabImgSrc;
+      tabToggleButtons[i].classList.remove("hidden");
+    }
+  }
+  else if (currScreenSize === "desktop") {
+    // Show content containers, hide buttons
+    for (var i=0; i<tabToggleButtons.length; i++) {
+      tabContentContainers[i].classList.remove("hidden");
+      tabToggleButtons[i].classList.add("hidden");
+    }
+  }
+}
+// Run when page first opened
+toggleMobileDropdownView();
+
+// Toggle button click event listener
+tabToggleButtons.forEach(tabToggleButton => {
+  tabToggleButton.onclick = (e) => {
+    let tabName = tabToggleButton.id.split("-")[0];
+    let contentContainerId = `${tabName}-content-container`;
+    let contentContainer = document.getElementById(contentContainerId);
+    // If currently closed => open
+    if (contentContainer.classList.contains("hidden")) {
+      contentContainer.classList.remove("hidden");
+      tabToggleButton.src = openedTabImgSrc;
+    }
+    // If currently open => close
+    else {
+      contentContainer.classList.add("hidden");
+      tabToggleButton.src = closedTabImgSrc;
+    }
+  };
+});
+
+
+
+/* HELPER FUNCTIONS */
 
 function isNotDefaultColor(hexColor) {
   return !Object.values(defaultColors).includes(hexColor);
