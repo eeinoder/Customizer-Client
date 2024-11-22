@@ -146,7 +146,11 @@ downloadButton.onclick = (e) => {
   // TODO: If logo is made and visible, create new imagData with merged
   // logo layer and cart base layer
   // If currentLogo3DImgData nonempty AND logo-image is NOT HIDDEN, download merged
+  document.body.style.backgroundColor = "rgb(0,0,0,0.2)"
   if (currentLogo3DImgData && isLogoVisible()) {
+    // TODO: should only do this if logo or color change between download calls
+    currentMergedImgData = getMergedLogoCartImageData(currentImgData, currentLogo3DImgData);
+    currentMergedImgDataURL = getImageDataURL(currentMergedImgData);
     downloadImage(currentMergedImgDataURL);
   }
   else {

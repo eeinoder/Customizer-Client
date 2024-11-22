@@ -155,6 +155,7 @@ function downloadImage(dataURL) {
   link.click();
   document.body.removeChild(link);
   delete link;
+  document.body.style.backgroundColor = "rgb(0,0,0,0)"
 }
 
 
@@ -385,8 +386,6 @@ function saveLogo3DImage() {
   // Apply homography matrix, use pixel units defined by logoBox
   currentLogo3DImgData = getLogoImageData3D(hMatrix, logoImg);
   currentLogo3DImgDataURL = getImageDataURL(currentLogo3DImgData);
-  currentMergedImgData = getMergedLogoCartImageData(currentImgData, currentLogo3DImgData);
-  currentMergedImgDataURL = getImageDataURL(currentMergedImgData);
 }
 
 function showLogo3DImage() {
