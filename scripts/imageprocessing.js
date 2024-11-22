@@ -9,6 +9,7 @@ const logoImgDiv = document.querySelector("#logo-image");
 //const logoImgDivPreview = document.querySelector("#logo-image-preview");
 const uploadLogoContainer = document.querySelector(".upload-logo-button-container");
 const uploadLogoPrompt = document.querySelector(".upload-logo-button-prompt");
+const uploadLogoControls = document.querySelector(".upload-logo-button-controls");
 
 const canvas = document.querySelector("#product-view-canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -155,7 +156,6 @@ function downloadImage(dataURL) {
   link.click();
   document.body.removeChild(link);
   delete link;
-  document.body.style.backgroundColor = "rgb(0,0,0,0)"
 }
 
 
@@ -397,13 +397,21 @@ function showLogo3DImage() {
 }
 
 function toggleLogoUploadContainer() {
-  let isLogoActive = uploadLogoPrompt.classList.contains("hidden");
-  if (!isLogoActive) {
+  if (!isLogoActive()) {
     uploadLogoPrompt.classList.add("hidden");
+    uploadLogoControls.classList.remove("hidden");
     uploadLogoContainer.style.backgroundImage = `url(${logoImg.src})`;
     uploadLogoContainer.style.backgroundSize = 'contain';
     uploadLogoContainer.style.backgroundRepeat = 'no-repeat';
     uploadLogoContainer.style.backgroundPosition = 'center';
+  }
+  else {
+    currentMergedImgData = "";
+    currentMergedImgDataURL = "";
+    uploadLogoControls.classList.add("hidden");
+    uploadLogoPrompt.classList.remove("hidden");
+    uploadLogoContainer.style.backgroundImage = "";
+    logoImgDiv.classList.add("hidden");
   }
 }
 

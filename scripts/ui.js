@@ -59,7 +59,11 @@ let productImage = document.querySelector("#product-image");
 let downloadButton = document.querySelector("#download-button");
 
 // Upload logo button
-let uploadLogoButton = document.querySelector(".upload-logo-button-container");
+let uploadLogoButton = document.querySelector(".upload-logo-button-prompt");
+
+// Logo control buttons
+let toggleLogoVisButton = document.querySelector("#toggle-logo-visibility-button");
+let removeLogoButton = document.querySelector("#remove-logo-button");
 
 // Attach onclick event listeners to Color selection buttons
 defaultColorButtons.forEach(colorButton => {
@@ -142,11 +146,11 @@ function chooseCustomColor(hexColor) {
   }
 }
 
+// TODO: ADD 'LOADING' ANIMATION 
 downloadButton.onclick = (e) => {
   // TODO: If logo is made and visible, create new imagData with merged
   // logo layer and cart base layer
   // If currentLogo3DImgData nonempty AND logo-image is NOT HIDDEN, download merged
-  document.body.style.backgroundColor = "rgb(0,0,0,0.2)"
   if (currentLogo3DImgData && isLogoVisible()) {
     // TODO: should only do this if logo or color change between download calls
     currentMergedImgData = getMergedLogoCartImageData(currentImgData, currentLogo3DImgData);
@@ -163,6 +167,21 @@ uploadLogoButton.onclick = (e) => {
   // 1. upload corners -> upload logo, view preview (before apply)
   // 2. on user input (click APPLY) ->
   buildLogoPlacementZone();
+}
+
+toggleLogoVisButton.onclick = (e) => {
+  if(isLogoVisible()) {
+    logoImgDiv.classList.add("hidden");
+    toggleLogoVisButton.src = "style/icons/hidden_black.png"
+  }
+  else {
+    logoImgDiv.classList.remove("hidden");
+    toggleLogoVisButton.src = "style/icons/visible_black.png"
+  }
+}
+
+removeLogoButton.onclick = (e) => {
+  toggleLogoUploadContainer();
 }
 
 
@@ -266,4 +285,8 @@ function isNotDefaultColor(hexColor) {
 
 function isLogoVisible() {
   return !logoImgDiv.classList.contains("hidden");
+}
+
+function isLogoActive() {
+  return uploadLogoPrompt.classList.contains("hidden")
 }
