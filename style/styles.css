@@ -54,7 +54,7 @@ h2 {
 
 /* ---------------------- CONTENT -------------------- */
 .content {
-  height: 77svh;
+  height: 83svh;
   margin-top: 2svh;
   padding: 0 10px;
 }
@@ -117,6 +117,7 @@ h2 {
 #product-image {
   align-self: center;
   width: 88%;
+  /*border: 1px solid red;*/
 }
 /*#product-view-canvas {
   border: 1px solid red;
@@ -135,6 +136,38 @@ h2 {
 #download-button > img:hover {
   width: 50px;
   opacity: 0.8;
+}
+#logo-placement-overlay {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 0;
+  left: 0;
+  /*background-color: rgba(0,0,0,0.2);*/
+  height: 100%;
+  width: 100%;
+  transform-origin: 0 0;
+  -webkit-transform-origin: 0 0;
+  -moz-transform-origin: 0 0;
+  -o-transform-origin: 0 0;
+}
+#logo-image-preview {
+  width: 200px;
+}
+.logo-image-container {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+#logo-image {
+  /*align-self: center;*/
+  width: 88%;
 }
 
 /* Customizations */
@@ -215,6 +248,12 @@ h2 {
   border: 1px solid black;
   cursor: pointer;
 }
+.upload-logo-button-prompt {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 #upload-logo-button-img {
   width: 30px;
 }
@@ -222,6 +261,9 @@ h2 {
   font-style: italic;
 }
 
+.tab-content-container {
+  margin: 0;
+}
 .tab-toggle-button {
   width: 20px;
   height: 20px;
@@ -232,8 +274,10 @@ h2 {
 
 /* ---------------------- FOOTER -------------------- */
 .footer {
-  height: 8svh;
+  height: 5svh;
   border-top: 1px solid black;
+  margin: 0 -10px;
+  background-color: rgb(80,70,228);;
 }
 
 /* ---------------------- Style classes ---------------------- */
@@ -299,5 +343,8 @@ h2 {
   }
   .color-customization-container {
     border: none;
+  }
+  .tab-content-container {
+    margin-left: 40px;
   }
 }

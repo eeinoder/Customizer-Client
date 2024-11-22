@@ -19,7 +19,15 @@ window.onresize = () => {
 
 // UI button parameters
 let selectedColor = "ffffff"; // default
+// Cart image data
+let currentImgData;
 let currentImgDataURL;
+// Logo image data
+let currentLogo3DImgData;
+let currentLogo3DImgDataURL;
+// Merged image data
+let currentMergedImgData;
+let currentMergedImgDataURL;
 
 const defaultColors = {
   "color-button-white": "ffffff",
@@ -49,6 +57,9 @@ let productImage = document.querySelector("#product-image");
 
 // Download button
 let downloadButton = document.querySelector("#download-button");
+
+// Upload logo button
+let uploadLogoButton = document.querySelector(".upload-logo-button-container");
 
 // Attach onclick event listeners to Color selection buttons
 defaultColorButtons.forEach(colorButton => {
@@ -87,8 +98,10 @@ initColorPicker();
 // On first click, load base and mask images
 colorisColorInput.onclick = (e) => {
   if (!Object.keys(imgObjects).includes("base-img")) {
-    maskImg = loadImage("mask-img");
-    baseImg = loadImage("base-img");
+    maskImg = loadImageObject("mask-img");
+    saveImageData(maskImg);
+    baseImg = loadImageObject("base-img");
+    saveImageData(baseImg);
   }
 }
 
@@ -110,6 +123,7 @@ colorisColorInput.onclose = (e) => {
   const hexColorRegex = /^#[0-9a-f]{3,6}$/i;
   if (hexColorRegex.test(hexColor)) {
     let hashlessHexColor = hexColor.substring(1);
+    // NOTE: POSSIBLE RACE CONDITION - CAN ONLY EXECUTE BELOW ONCE MASK AND BASE IMGs LOADED IN
     chooseCustomColor(hashlessHexColor);
   }
 }
@@ -121,6 +135,7 @@ function chooseCustomColor(hexColor) {
     deselectColorOptions();
     let coloredImageData = getColoredImageData(maskImg, baseImg, hexColor)
     selectedColor = hexColor;
+    currentImgData = coloredImageData;
     currentImgDataURL = getImageDataURL(coloredImageData);
     productImage.src = currentImgDataURL;
     //console.log("color picked: ", hexColor)
@@ -128,8 +143,23 @@ function chooseCustomColor(hexColor) {
 }
 
 downloadButton.onclick = (e) => {
-  downloadImage();
+  // TODO: If logo is made and visible, create new imagData with merged
+  // logo layer and cart base layer
+  // If currentLogo3DImgData nonempty AND logo-image is NOT HIDDEN, download merged
+  if (currentLogo3DImgData && isLogoVisible()) {
+    downloadImage(currentMergedImgDataURL);
+  }
+  else {
+    downloadImage(currentImgDataURL);
+  }
 };
+
+uploadLogoButton.onclick = (e) => {
+  //TODO: may want to separate above into separate actions
+  // 1. upload corners -> upload logo, view preview (before apply)
+  // 2. on user input (click APPLY) ->
+  buildLogoPlacementZone();
+}
 
 
 // CUSTOM COLOR SELECT
@@ -149,10 +179,13 @@ function selectColorOption(selectedColorButton) {
   selectedColor = defaultColors[selectedColorButton.id];
   // Load image, get dataURL on first selection
   if (!Object.keys(imgObjects).includes(selectedColorButton.id)) {
-    loadImage(selectedColorButton.id);
+    saveImageData(loadImageObject(selectedColorButton.id), true);
   }
-  // Update current image dataURL
-  currentImgDataURL = imgObjects[selectedColorButton.id].dataURL;
+  else {
+    // Update current image dataURL
+    currentImgData = mgObjects[selectedColorButton.id].imageData;
+    currentImgDataURL = imgObjects[selectedColorButton.id].dataURL;
+  }
 }
 
 function deselectColorOptions() {
@@ -217,9 +250,16 @@ tabToggleButtons.forEach(tabToggleButton => {
 });
 
 
+// TODO: ON CLICK PRODUCT VIEWER => FULLSCREEN IMAGE (?)
+
+
 
 /* HELPER FUNCTIONS */
 
 function isNotDefaultColor(hexColor) {
   return !Object.values(defaultColors).includes(hexColor);
+}
+
+function isLogoVisible() {
+  return !logoImgDiv.classList.contains("hidden");
 }

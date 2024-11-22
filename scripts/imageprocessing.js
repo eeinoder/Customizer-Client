@@ -1,8 +1,19 @@
 /* Client side image processing script */
 
-// Canvas parameters
+
+// Canvas, product view parameters
+const viewContainer = document.querySelector(".product-view-container");
+const logoOverlay = document.querySelector("#logo-placement-overlay");
+const logoImgContainer = document.querySelector(".logo-image-container");
+const logoImgDiv = document.querySelector("#logo-image");
+//const logoImgDivPreview = document.querySelector("#logo-image-preview");
+const uploadLogoContainer = document.querySelector(".upload-logo-button-container");
+const uploadLogoPrompt = document.querySelector(".upload-logo-button-prompt");
+
 const canvas = document.querySelector("#product-view-canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
+//const scaleLogoCanvas = document.querySelector("#scale-logo-canvas");
+//const scaleLogoCtx = scaleLogoCanvas.getContext("2d", { willReadFrequently: true });
 
 const imgURLs = {
   // Default color images
@@ -14,53 +25,56 @@ const imgURLs = {
   "color-button-violet": "https://i.imgur.com/6571h3j.jpeg",
   // Images for image processing (e.g. base layer, mask layer)
   "base-img": "https://i.imgur.com/PVFQMoM.jpeg",
-  "mask-img": "https://i.imgur.com/NZVkbc2.png"
+  "mask-img": "https://i.imgur.com/MMZyBZy.png",
+  "corners-img": "https://i.imgur.com/9fqr5Jd.png",
+  // Test images
+  "logo-img": "https://i.imgur.com/X4FAu7l.png",
 }
 
 // Default color images (new image objects)
 let imgObjects = {} // name : image
 // Load first default image (white cart)
 // TODO: make this into initImageObjects()
-loadImage("color-button-white");
-// Set current image data (default, onload)
-currentImgDataURL = imgObjects["color-button-white"].dataURL;
-
-/*for (const [cartImgName, cartImgURL] of Object.entries(imgURLs)) {
-  let newImgObj = new Image();
-  newImgObj.remoteURL = cartImgURL;
-  saveImageData(newImgObj);
-  imgObjects[cartImgName] = newImgObj;
-}*/
-
-// TODO: INVOKE LOADIMAGE() FOR maskImg AND baseImg on
-// first click of colorpicker
+saveImageData(loadImageObject("color-button-white"), true);
 
 // Cart images for image processing: color fill "mask", and base image, nonwhite default color images
 let maskImg;
 let baseImg;
+let logoImg;
 
+// Marked corner pixels (nontransparent, red) in corners-img
+let markedPixelIndexes = [];  // index in imgData.data for corresponding pixel
+let markedPixelCoords = [];   // coords for pixel in web page dimensions (rel. to origin of product-image)
+let logoBox = {};       // coords, dimensions and bounds for rectangle bouding marked pixels for logo placement
+/* logoBox = {
+    logoBox.left = xMin;
+    logoBox.right = xMax;
+    logoBox.top = yMin;
+    logoBox.bottom = yMax;
+    logoBox.width = xMax - xMin;
+    logoBox.height = yMax - yMin;
+    logoBox.coords = [[],[],[],[]]];
+  } */
+let logoAspectRatio;
+let hMatrix;
+
+// TODO:
+// May want to have multiple logo images applied to different surfaces
+// Need multiple instances of logoImgs, cornerImgs, markedPixelIndexes,
+// markedPixelCoords, logoBox, and logoAspectRatio
+// Save all in separate logoObj objects
 
 // TODO: get this from image file, HTML doc, etc. Move to UI.js?
 let companyName = "Unique_Vending_Carts";
 let productName = "Cooler_Cart";
 
+
+
+/* --------------------------- GET IMAGE DATA --------------------------- */
+
 // NOTE: setting custom paramters for image objects:
 // remoteURL: url link to png image (for now, imgur link)
 // imageData: image data obtained from canvas context, imageData.data gives pixel values
-
-// Get image data
-/*cartImgs.forEach(cartImg => {
-  cartImg.crossOrigin = "anonymous";
-  cartImg.onload = () => {
-    // Set canvas, draw to canvas
-    canvas.width = cartImg.width;
-    canvas.height = cartImg.height;
-    ctx.drawImage(cartImg, 0, 0);
-    // Get image data
-    cartImg.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  };
-  cartImg.src = cartImg.remoteURL;
-});*/
 
 // function load image handler
 // NOTE: attemot at lazy loading images
@@ -69,32 +83,84 @@ let productName = "Cooler_Cart";
 //    (check if in hashmap imgObjects)
 // 3. load maskImg, baseImg (for image processing) on first interaction
 //    with color picker
-function loadImage(imgNodeName) {
+function loadImageObject(imgNodeName) {
   console.log("LOADING IMG: ", imgNodeName)
   let newImgObj = new Image();
   newImgObj.remoteURL = imgURLs[imgNodeName];
+  newImgObj.imgNodeName = imgNodeName;
   saveImageData(newImgObj);
   imgObjects[imgNodeName] = newImgObj;
   return newImgObj;
 }
 
 // Draw image to canvas, get image data, save as object parameter
-function saveImageData(imgObj) {
+function saveImageData(imgObj, updateCurrDataURL=false) {
   imgObj.crossOrigin = "anonymous";
   imgObj.onload = () => {
     // Set canvas, draw to canvas
-    canvas.width = imgObj.width;
-    canvas.height = imgObj.height;
-    ctx.drawImage(imgObj, 0, 0);
-    // Get image data
-    imgObj.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // Get image data url
-    imgObj.dataURL = canvas.toDataURL();
+    if (imgObj.imgNodeName === "corners-img") {
+      // Build perspective plane => Save marked corner pixels
+      saveFullImageData(imgObj);
+      // Save marked pixels, find corresponging coordinates
+      saveMarkedPixelData(imgObj);
+      // Reorder marked pixel coords if necessary
+      orderMarkedPixelCoords();
+      // Calculate and save pixel coords of bounding rectangle around marked px
+      saveOuterRectPixelCoords();
+      // Fetch logo image
+      // TODO: TESTING REMOTE SRC (imgur) LOGO TRANSFORM - REPLACE WITH UPLOAD HANDLING AND SERVER CALL
+      saveLogoImage();
+    }
+    // NOTE: order matters -- must save corners-img before logo-img
+    else if (imgObj.imgNodeName === "logo-img") {
+      let scaleFactor = 0.8; // TODO: change this programmatically
+      saveLogoImageData(imgObj, scaleFactor);
+      saveHomography();
+      saveLogo3DImage();
+      showLogo3DImage();
+    }
+    else {
+      saveFullImageData(imgObj);
+    }
+    if (updateCurrDataURL) {
+      // Update current currentImgData, dataURL
+      currentImgData = imgObj.imageData;
+      currentImgDataURL = imgObj.dataURL;
+    }
+    // NOTE: may want to use this for logo position preview
+    /*if (imgObj.imgNodeName === "logo-img") {
+      // Set src to make logo img visible
+      logoImgDivPreview.src = imgObj.dataURL;
+    }*/
   };
   imgObj.src = imgObj.remoteURL;
 }
 
+// TODO: optimize - save some recent imageData as dataURLs,
+// set productImage.src on subsequent calls instead of new
+// canvas operation everytime.
+function getImageDataURL(imageData) {
+  // Draw new image to canvas
+  ctx.putImageData(imageData, 0, 0);
+  // Convert canvas to data URL (base64 encoded PNG)
+  return canvas.toDataURL();
+}
 
+function downloadImage(dataURL) {
+  let fileName = `${companyName}_${productName}.png`;
+  let link = document.createElement("a");
+  link.download = fileName;
+  link.href = dataURL;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  delete link;
+}
+
+
+
+
+/* --------------------------- COLOR IMAGE --------------------------- */
 
 
 // Color maskImg (color overlay) with color burn pixel math
@@ -107,6 +173,8 @@ function getColoredImageData(maskImg, baseImg, selectedColorHex="FFFFFF", blendM
   // Result data, colored image
   let resultImageData = new ImageData(baseImg.width, baseImg.height);
   let resultPixelData = resultImageData.data;
+  console.log("baseImg length: ", baseImgPixelData.length)
+  console.log("resImg length: ", resultPixelData.length)
   // NOTE: data property is readonly. Assign reference, set pixel values directly.
   // Parse color RGB value from hex code string
   let selectedColorRGB = hexToRGB(selectedColorHex);
@@ -149,32 +217,307 @@ function getColoredImageData(maskImg, baseImg, selectedColorHex="FFFFFF", blendM
 }
 
 
-// TODO: optimize - save some recent imageData as dataURLs,
-// set productImage.src on subsequent calls instead of new
-// canvas operation everytime.
-function getImageDataURL(imageData) {
-  // Draw new image to canvas
-  ctx.putImageData(imageData, 0, 0);
-  // Convert canvas to data URL (base64 encoded PNG)
-  return canvas.toDataURL();
+
+/* --------------------------- LOGO UPLOAD --------------------------- */
+
+// 2 options: a. automatically center, b. place manually
+
+// PLACE MANUALLY -- Project "logo zone" on mouse hover over product image
+// 1. Find homography / transformation matrix from 4 points in image
+//    1a. using 4 manually colored red pixels (255,37,0) in "corners image"
+// 2. Project "fullsize" rectangle div (i.e. entire area of cart side)
+// 3. Highlight/color small section of div centered around mouse cursor, dimensions
+//    of section same as scaled logo image => project this image
+// 4. Make new logo image with logo in highlighted section, project onto cart
+// 5. Save cart image / new data url ??
+
+/*window.onmousemove = (e) => {
+  console.log(`mouse pos: ${e.clientX}, ${e.clientY}`)
+}*/
+
+// Apply matrix 3d transform to input logo image
+// NOTE: MUST rescale to original, consider origin with respect to base image
+function getLogoImageData3D(hMatrix, logoImg) {
+  let logoImgPixelData = logoImg.imageData.data;
+  let pixelWidth = logoImg.imageData.width;
+  let pixelHeight = logoImg.imageData.height;
+  // Result data, colored image
+  let resultImageData = new ImageData(pixelWidth, pixelHeight);
+  let resultPixelData = resultImageData.data;
+  //console.log("input data calc len: ", logoImg.height * logoImg.width * 4)
+  //console.log("input imageData calc len: ", logoImg.imageData.height * logoImg.imageData.width * 4)
+  //console.log("output data calc len: ", resultImageData.height * resultImageData.width * 4)
+  //console.log("input data len: ", logoImgPixelData.length)
+  //console.log("output data len: ", resultPixelData.length)
+  // Iterate over individual pixels
+  //let temp = 0;
+  for (let i = 0; i < logoImgPixelData.length; i += 4) {
+    let [r,g,b,a] = [logoImgPixelData[i],
+                     logoImgPixelData[i+1],
+                     logoImgPixelData[i+2],
+                     logoImgPixelData[i+3]]
+    if (a > 0) {
+      let pixelCount = i/4;
+      let pixelY = Math.floor(pixelCount/pixelWidth);
+      let pixelX = pixelCount % pixelWidth;
+      //let pixelY = Math.floor(i/(4*logoImg.width));
+      //let pixelX = i % (4*logoImg.width);
+      // Input coordinate
+      //let inputCoord = [pixelX+logoBox.left, pixelY+logoBox.top];
+      let inputCoord = [pixelX, pixelY];
+      // Output coordinate
+      let [xOutput, yOutput] = applyHomography(hMatrix, inputCoord);
+      // Coordinate to pixel index
+      //let newIndex = (Math.floor(yOutput)-logoBox.top) * (pixelWidth * 4) + (Math.floor(xOutput)-logoBox.left) * 4;
+      let newIndex = (Math.floor(yOutput)) * (pixelWidth * 4) + (Math.floor(xOutput)) * 4;
+      // Write pixel data to result imageData
+      resultPixelData[newIndex] = r;
+      resultPixelData[newIndex+1] = g;
+      resultPixelData[newIndex+2] = b;
+      resultPixelData[newIndex+3] = a;
+    }
+  }
+  return resultImageData;
+}
+
+function getMergedLogoCartImageData(currentImgData, currentLogo3DImgData) {
+  let logoImgPixelData = currentLogo3DImgData.data;
+  let cartImgPixelData = currentImgData.data;
+  // Result data, colored image
+  let resultImageData = new ImageData(currentImgData.width, currentImgData.height);
+  let resultPixelData = resultImageData.data;
+  // Iterate over individual pixels
+  for (let i = 0; i < cartImgPixelData.length; i += 4) {
+    let logoPixel = [logoImgPixelData[i], logoImgPixelData[i+1], logoImgPixelData[i+2], logoImgPixelData[i+3]];
+    let cartPixel = [cartImgPixelData[i], cartImgPixelData[i+1], cartImgPixelData[i+2], cartImgPixelData[i+3]];
+    let resultPixel = cartPixel;
+    // If logo pixel nontransparent, add to result image data
+    if (logoPixel[3] > 0) {
+      resultPixel = logoPixel;
+    }
+    resultPixelData[i] = resultPixel[0];
+    resultPixelData[i+1] = resultPixel[1];
+    resultPixelData[i+2] = resultPixel[2];
+    resultPixelData[i+3] = resultPixel[3];
+  }
+  return resultImageData;
 }
 
 
-function downloadImage() {
-  let fileName = `${companyName}_${productName}.png`;
-  let link = document.createElement("a");
-  link.download = fileName;
-  //link.href = productImage.src;
-  link.href = currentImgDataURL;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  delete link;
+
+/* ------------------------ HELPER FUNCTIONS (CANVAS) ------------------------ */
+
+function saveFullImageData(imgObj) {
+  canvas.width = imgObj.width;
+  canvas.height = imgObj.height;
+  ctx.drawImage(imgObj, 0, 0);
+  // Get image data
+  imgObj.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  // Get image data url
+  imgObj.dataURL = canvas.toDataURL();
+}
+
+// Save logo image in base cart image size container
+// Scale image to fit inside scaleFactor % of side panel (logoBox dimensions)
+function saveLogoImageData(imgObj, scaleFactor) {
+  // TODO: err handling if logoBox is empty
+  canvas.width = currentImgData.width;
+  canvas.height = currentImgData.height;
+  let aspectRatio = imgObj.width / imgObj.height;
+  let relWidth = imgObj.width / logoBox.width;
+  let relHeight = imgObj.height / logoBox.height;
+  let scaleWidth = scaleFactor * logoBox.width;
+  let scaleHeight = scaleWidth / aspectRatio;
+  // Assuming width is larger, adjust if height > width
+  if (relHeight > relWidth) {
+    scaleHeight = scaleFactor * logoBox.height;
+    scaleWidth = scaleHeight * aspectRatio;
+  }
+  // Choose draw origin such that logo is centered
+  let xInit = logoBox.left + (logoBox.width - scaleWidth)/2;
+  let yInit = logoBox.top + (logoBox.height - scaleHeight)/2;
+  console.log("logo box top: ", logoBox.top)
+  console.log("yInit: ", yInit)
+  ctx.drawImage(imgObj, xInit, yInit, scaleWidth, scaleHeight);
+  // Get image data
+  imgObj.imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  console.log(4*canvas.width*canvas.height)
+  // Get image data url
+  imgObj.dataURL = canvas.toDataURL();
 }
 
 
 
-/* HELPER FUNCTION */
+/* ------------------------ HELPER FUNCTIONS (LOGO) ------------------------ */
+
+function buildLogoPlacementZone() {
+  saveImageData(loadImageObject("corners-img"));
+}
+
+// TODO: REPLACE WITH LOGO IMAGE UPLOAD, SERVER CALL
+function saveLogoImage() {
+  logoImg = loadImageObject("logo-img");
+  saveImageData(logoImg);
+}
+
+function saveMarkedPixelData(imgObj) {
+  let imgPixelData = imgObj.imageData.data;
+  // Iterate over individual pixels
+  for (let i = 0; i < imgPixelData.length; i += 4) {
+    // Find corner pixels index for logo application
+    let alpha = imgPixelData[i+3];
+    let pixel = [imgPixelData[i], imgPixelData[i+1], imgPixelData[i+2], alpha];
+    if (isMarkedPixel(pixel)) {
+      markedPixelIndexes.push(i);
+      markedPixelCoords.push(getCornerImgPixelCoords(imgObj, i));
+    }
+  }
+}
+
+function saveHomography() {
+  // Get homography matrix
+  hMatrix = getHomography(
+    logoBox.coords[0], markedPixelCoords[0], logoBox.coords[1], markedPixelCoords[1],
+    logoBox.coords[3], markedPixelCoords[3], logoBox.coords[2], markedPixelCoords[2]);
+}
+
+function saveLogo3DImage() {
+  // Apply homography matrix, use pixel units defined by logoBox
+  currentLogo3DImgData = getLogoImageData3D(hMatrix, logoImg);
+  currentLogo3DImgDataURL = getImageDataURL(currentLogo3DImgData);
+  currentMergedImgData = getMergedLogoCartImageData(currentImgData, currentLogo3DImgData);
+  currentMergedImgDataURL = getImageDataURL(currentMergedImgData);
+}
+
+function showLogo3DImage() {
+  // Make logo visible in logoImageContainer
+  logoImgDiv.src = currentLogo3DImgDataURL;
+  logoImgDiv.classList.remove("hidden");
+  // Make logo visible in upload logo button container
+  toggleLogoUploadContainer();
+}
+
+function toggleLogoUploadContainer() {
+  let isLogoActive = uploadLogoPrompt.classList.contains("hidden");
+  if (!isLogoActive) {
+    uploadLogoPrompt.classList.add("hidden");
+    uploadLogoContainer.style.backgroundImage = `url(${logoImg.src})`;
+    uploadLogoContainer.style.backgroundSize = 'contain';
+    uploadLogoContainer.style.backgroundRepeat = 'no-repeat';
+    uploadLogoContainer.style.backgroundPosition = 'center';
+  }
+}
+
+// Calculate pixel coordinate on product view img from pixel on cart image
+function getCornerImgPixelCoords(imgObj, pixelIndex) {
+  let imgRect = productImage.getBoundingClientRect();
+  let imgWidth = imgObj.width;
+  let widthRatio = imgRect.width / imgWidth;
+  let pixelCount = Math.floor(pixelIndex/4);
+  let pixelY = Math.floor(pixelCount/imgWidth);
+  let pixelX = pixelCount % imgWidth;
+  /*let adjustedPixelY = widthRatio * pixelY;
+  let adjustedPixelX = widthRatio * pixelX;
+  return [adjustedPixelX, adjustedPixelY];*/
+  return [pixelX, pixelY]
+}
+
+// Order pixel coords to match bounding rect coords: TL, TR, BL, BR
+// Pixel data is read like an array, left-to-right, top-down.
+// If perspective plane is skewed such that TR pixel is read before TL,
+// same for BR and BL pixel coords, swap their position in markedPixelCoords.
+function orderMarkedPixelCoords() {
+  // Check that markedPixelCoords is nonenempty, should contain 4 pixel coords
+  if (markedPixelCoords.length !== 4) {
+    return; // TODO: Handle error
+  }
+  // Swap top left and top right pixel coords if needed
+  if (markedPixelCoords[0][0] > markedPixelCoords[1][0] &&
+      markedPixelCoords[0][1] <= markedPixelCoords[1][1]) {
+        let temp = markedPixelCoords[0];
+        markedPixelCoords[0] = markedPixelCoords[1];
+        markedPixelCoords[1] = temp;
+      }
+  // Swap bottom left and bottom right if needed
+  if (markedPixelCoords[2][0] > markedPixelCoords[3][0] &&
+      markedPixelCoords[2][1] <= markedPixelCoords[3][1]) {
+        let temp = markedPixelCoords[2];
+        markedPixelCoords[2] = markedPixelCoords[3];
+        markedPixelCoords[3] = temp;
+      }
+}
+
+// Get pixel coords for rectangle around marker corner pixels in cart img
+// (i.e. make basis pixels from which to transform to perspective pixels)
+// TODO: CAPTURE MOUSE CURSOR, PROJECT MOUSE POSITION AS WELL (USE DIFF ICON)
+// SO PROJECTED HIGHLIGHT DIV SECTION IS ALWAYS CENTERED ON CURSOR
+function saveOuterRectPixelCoords() {
+  // Check that markedPixelCoords is nonenempty, should contain 4 pixel coords
+  if (markedPixelCoords.length !== 4) {
+    return; // TODO: Handle error
+  }
+  let xMin = markedPixelCoords[0][0];
+  let xMax = xMin;
+  let yMin = markedPixelCoords[0][1];
+  let yMax = yMin;
+  for (var i=1; i<4; i++) {
+    xMin = Math.min(xMin, markedPixelCoords[i][0]);
+    xMax = Math.max(xMax, markedPixelCoords[i][0]);
+    yMin = Math.min(yMin, markedPixelCoords[i][1]);
+    yMax = Math.max(yMax, markedPixelCoords[i][1]);
+  }
+  logoBox.left = xMin;
+  logoBox.right = xMax;
+  logoBox.top = yMin;
+  logoBox.bottom = yMax;
+  logoBox.width = xMax - xMin;
+  logoBox.height = yMax - yMin;
+  logoBox.coords = [[xMin,yMin],[xMax,yMin],[xMin,yMax],[xMax,yMax]];
+}
+
+// Initialize logo overlay div - Set position and transform properties
+// NOTE: USE FOR FUTURE FEATURE -- PREVIEW AND PLACING LOGO
+// ONCE PLACED, CONVERT COORDINATES BACK TO FULL IMG, ...
+/*function initLogoOverlay() {
+  // Relevant coordinates calculated relative to img, BUT logo overlay div
+  // positioned relative to view container. Must correct for this before setting.
+  let viewContainerRect = viewContainer.getBoundingClientRect();
+  let imgRect = productImage.getBoundingClientRect();
+  let xDiff = imgRect.left - viewContainerRect.left;
+  let yDiff = imgRect.top - viewContainerRect.top;
+  // Set position and dimensinos
+  logoOverlay.style.top = logoBox.top + yDiff + "px";
+  logoOverlay.style.left = logoBox.left + xDiff + "px";
+  logoOverlay.style.height = logoBox.height + "px";
+  logoOverlay.style.width = logoBox.width + "px";
+  // Set tranform origin
+  let origin = `${-logoBox.left-xDiff}px ${-logoBox.top-yDiff}px`;
+  logoOverlay.style["-webkit-transform-origin"] = origin;
+  logoOverlay.style["-moz-transform-origin"] = origin;
+  logoOverlay.style["-o-transform-origin"] = origin;
+  logoOverlay.style.transformOrigin = origin;
+  // Make visible
+  logoOverlay.classList.remove("hidden");
+  logoImgDivPreview.classList.remove("hidden");
+}*/
+
+function isMarkedPixel(pixel, tolerance=0.005) {
+  let [r, g, b, a] = pixel;
+  // Impl 1. Color match pixel in mask image to red pixel
+  /*let target = [255, 37, 0];
+  let diffPercent = (Math.abs(target[0]-r) +
+                      Math.abs(target[1]-g) +
+                      Math.abs(target[2]-b)) / (3*255);
+  return diffPercent <= tolerance;*/
+  // Impl 2. Find only nontransparent pixels in corner image
+  let targetAlpha = 255;
+  let diffPercent = (targetAlpha-a)/targetAlpha;
+  return diffPercent <= tolerance;
+}
+
+
+
+/* ------------------------ HELPER FUNCTIONS (COLOR) ------------------------ */
 
 // Color pixel data according to coloring algorithm, e.g. color burn
 // Pixels are 4-arrays, [red, green, blue, alpha]
@@ -224,27 +567,6 @@ function hexToRGB(hexCode) {
   let green = parseInt(hexCode.substring(2,4), 16);
   let blue = parseInt(hexCode.substring(4,6), 16);
   return [red, green, blue];
-}
-
-
-
-/* TESTING */
-
-function getRedShiftedImageData(image) {
-  let pixelData = image.imageData.data;
-  let redShiftPixelData = pixelData;
-  let redShiftImageData = new ImageData(image.width, image.height);
-  // Iterate over individual pixels
-  for (let i = 0; i < pixelData.length; i += 4) {
-    const red = redShiftPixelData[i];
-    const green = redShiftPixelData[i + 1];
-    const blue = redShiftPixelData[i + 2];
-    const alpha = redShiftPixelData[i + 3];
-    // Test: redshift pixels
-    redShiftPixelData[i] += 50;
-  }
-  redShiftImageData.data = redShiftPixelData;
-  return redShiftImageData;
 }
 
 

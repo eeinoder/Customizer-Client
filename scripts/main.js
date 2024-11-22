@@ -6,6 +6,7 @@
 let scripts = [
   "scripts/coloris.js",
   "scripts/ui.js",
+  "scripts/matrix.js",
   "scripts/imageprocessing.js"
 ];
 
